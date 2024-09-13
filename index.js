@@ -18,10 +18,16 @@ const app = express();
 app.use(express.json());
 
 // CORS Configuration
+// app.use(cors({
+//     origin: 'https://libraryfrontend.vercel.app/',
+//     credentials: true
+// }));
+
 app.use(cors({
-    origin: process.env.CLIENT_ORIGIN || '*',  // Allows all origins in production, can be restricted for specific domains
-    credentials: true
-}));
+    origin: 'https://libraryfrontend.vercel.app/', // yha pe apna linj daal dena '   ' me 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
 
 app.use(cookieParser());
 
