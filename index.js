@@ -24,10 +24,8 @@ app.use(express.json());
 // }));
 
 app.use(cors({
-    origin: 'https://libraryfrontend.vercel.app/', // yha pe apna linj daal dena '   ' me 
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
+    origin: '*'
+}));
 
 app.use(cookieParser());
 
