@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import './db.js';
-import { AdminRuter } from './routes/auth.js';
+import { AdminRouter } from './routes/auth.js';
 import { studentRouter } from './routes/student.js';
 import { bookRouter } from './routes/book.js';
 import { Book } from './models/Book.js';
@@ -19,13 +19,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-    origin: '*',  
+    origin: ['http://localhost:5173', 'https://libraryfrontend.vercel.app'],  // Allow both localhost and production URLs
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 
 // app.use(cors({
 //     origin: function (origin, callback) {
-    
+//         // Allow requests with no origin (like mobile apps, curl, etc.)
 //         if (!origin) return callback(null, true);
 //         if (allowedOrigins.indexOf(origin) === -1) {
 //             const msg = 'The CORS policy for this site does not allow access from the specified origin.';
@@ -37,7 +40,7 @@ app.use(cors({
 // }));
 
 // Routes
-app.use('/auth', AdminRuter);
+app.use('/auth', AdminRouter);
 app.use('/student', studentRouter);
 app.use('/book', bookRouter);
 
