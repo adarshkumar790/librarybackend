@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import './db.js';
-// import { AdminRouter } from './routes/auth.js';
 import { AdminRouter } from './routes/auth.js';
+// import { AdminRouter } from './routes/auth.js';
 import { studentRouter } from './routes/student.js';
 import { bookRouter } from './routes/book.js';
 import { Book } from './models/Book.js';
@@ -38,7 +38,7 @@ app.use(cors({
 // }));
 
 // Routes
-app.use('/auth', AdminRouter);
+app.use('/auth', AdminRuter);
 app.use('/student', studentRouter);
 app.use('/book', bookRouter);
 
