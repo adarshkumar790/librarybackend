@@ -6,39 +6,40 @@ import bcrypt from 'bcrypt';
 
 const router = express.Router();
 
+// Admin and Student Login Route
 router.post('/login', async (req, res) => {
    try {
       const { username, password, role } = req.body;
-      
+
       if (role === 'admin') {
          const admin = await Admin.findOne({ username });
          if (!admin) {
-            return res.json({ message: "Admin not registered" });
+            return res.status(400).json({ message: "Admin not registered" });
          }
 
          const validPassword = await bcrypt.compare(password, admin.password);
          if (!validPassword) {
-            return res.json({ message: "Wrong password" });
+            return res.status(400).json({ message: "Wrong password" });
          }
 
          const token = jwt.sign({ username: admin.username, role: 'admin' }, process.env.Admin_Key, { expiresIn: '1h' });
          return res.json({ login: true, role: 'admin', token });
-      
+
       } else if (role === 'student') {
          const student = await Student.findOne({ username });
          if (!student) {
-            return res.json({ message: "Student not registered" });
+            return res.status(400).json({ message: "Student not registered" });
          }
 
          const validPassword = await bcrypt.compare(password, student.password);
          if (!validPassword) {
-            return res.json({ message: "Wrong password" });
+            return res.status(400).json({ message: "Wrong password" });
          }
 
          const token = jwt.sign({ username: student.username, role: 'student' }, process.env.Student_Key, { expiresIn: '1h' });
          return res.json({ login: true, role: 'student', token });
       } else {
-         return res.json({ message: "Invalid role" });
+         return res.status(400).json({ message: "Invalid role" });
       }
 
    } catch (err) {
@@ -46,7 +47,7 @@ router.post('/login', async (req, res) => {
    }
 });
 
-// Verify Admin middleware using the Authorization header
+// Middleware to verify Admin JWT
 const verifyAdmin = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -64,7 +65,7 @@ const verifyAdmin = (req, res, next) => {
     });
 };
 
-// Verify User middleware (admin or student) using the Authorization header
+// Middleware to verify either Admin or Student JWT
 const verifyUser = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -72,10 +73,11 @@ const verifyUser = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    // First, check for Admin token
+
+    // Verify Admin token first
     jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
         if (err) {
-            // If Admin verification fails, check for Student token
+            // If Admin token is invalid, check for Student token
             jwt.verify(token, process.env.Student_Key, (err, decoded) => {
                 if (err) {
                     return res.status(403).json({ message: "Invalid token" });
@@ -92,10 +94,12 @@ const verifyUser = (req, res, next) => {
     });
 };
 
+// Verify route to test if the JWT is valid
 router.get('/verify', verifyUser, (req, res) => {
    return res.json({ login: true, role: req.role });
 });
 
+// Logout route (purely for client-side handling, JWT will just expire)
 router.get('/logout', (req, res) => {
    return res.json({ logout: true, message: "Logout successful" });
 });
