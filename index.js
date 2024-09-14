@@ -18,11 +18,13 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS Configuration with conditional origin handling
-const allowedOrigins = [
-    'http://localhost:5173',    // Allow for development
-    'https://libraryfrontend.vercel.app' // Allow for production
-];
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://libraryfrontend.vercel.app'],  // Allow both localhost and production URLs
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 
 app.use(cors({
     origin: function (origin, callback) {
