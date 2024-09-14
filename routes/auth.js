@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 
 const router = express.Router();
 
-// Admin and Student Login Route
+// Login route for both Admin and Student
 router.post('/login', async (req, res) => {
    try {
       const { username, password, role } = req.body;
@@ -22,7 +22,10 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: "Wrong password" });
          }
 
+         // Sign token for Admin
          const token = jwt.sign({ username: admin.username, role: 'admin' }, process.env.Admin_Key, { expiresIn: '1h' });
+
+         // Return the token in the response (no more setting cookies)
          return res.json({ login: true, role: 'admin', token });
 
       } else if (role === 'student') {
@@ -36,8 +39,12 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: "Wrong password" });
          }
 
+         // Sign token for Student
          const token = jwt.sign({ username: student.username, role: 'student' }, process.env.Student_Key, { expiresIn: '1h' });
+
+         // Return the token in the response (no more setting cookies)
          return res.json({ login: true, role: 'student', token });
+
       } else {
          return res.status(400).json({ message: "Invalid role" });
       }
@@ -47,64 +54,66 @@ router.post('/login', async (req, res) => {
    }
 });
 
-// Middleware to verify Admin JWT
+// Middleware to verify Admin
 const verifyAdmin = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: "Authorization token missing or invalid" });
-    }
+   const authHeader = req.headers.authorization;
+   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Unauthorized access" });
+   }
 
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ message: "Invalid token" });
-        }
-        req.username = decoded.username;
-        req.role = decoded.role;
-        next();
-    });
+   const token = authHeader.split(' ')[1];
+   jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+      if (err) {
+         return res.status(403).json({ message: "Invalid token" });
+      }
+      req.username = decoded.username;
+      req.role = decoded.role;
+      next();
+   });
 };
 
-// Middleware to verify either Admin or Student JWT
+// Middleware to verify Admin or Student token
 const verifyUser = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: "Authorization token missing or invalid" });
-    }
+   const authHeader = req.headers.authorization;
+   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Unauthorized access" });
+   }
 
-    const token = authHeader.split(' ')[1];
+   const token = authHeader.split(' ')[1];
 
-    // Verify Admin token first
-    jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
-        if (err) {
-            // If Admin token is invalid, check for Student token
-            jwt.verify(token, process.env.Student_Key, (err, decoded) => {
-                if (err) {
-                    return res.status(403).json({ message: "Invalid token" });
-                }
-                req.username = decoded.username;
-                req.role = decoded.role;
-                next();
-            });
-        } else {
+   // Try to verify as Admin first
+   jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+      if (err) {
+         // If not an Admin, try verifying as a Student
+         jwt.verify(token, process.env.Student_Key, (err, decoded) => {
+            if (err) {
+               return res.status(403).json({ message: "Invalid token" });
+            }
             req.username = decoded.username;
             req.role = decoded.role;
             next();
-        }
-    });
+         });
+      } else {
+         req.username = decoded.username;
+         req.role = decoded.role;
+         next();
+      }
+   });
 };
 
-// Verify route to test if the JWT is valid
+// Route to verify the token
 router.get('/verify', verifyUser, (req, res) => {
    return res.json({ login: true, role: req.role });
 });
 
-// Logout route (purely for client-side handling, JWT will just expire)
+// Logout route (no more cookie clearing, just client-side token handling)
 router.get('/logout', (req, res) => {
-   return res.json({ logout: true, message: "Logout successful" });
+   // Client-side will handle token removal (localStorage/sessionStorage)
+   return res.json({ logout: true, message: "Logout successful. Please clear the token on the client side." });
 });
 
 export { router as AdminRouter, verifyAdmin };
+
 
 
 // import express from 'express'
