@@ -2,8 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import './db.js';
-import { AdminRuter } from './routes/auth.js';
+import './db.js'; // Ensure db.js is correctly connecting to your database
+import { AdminRouter } from './routes/auth.js'; // Correct typo from 'AdminRuter'
 import { studentRouter } from './routes/student.js';
 import { bookRouter } from './routes/book.js';
 import { Book } from './models/Book.js';
@@ -18,29 +18,26 @@ const app = express();
 app.use(express.json());
 
 // CORS Configuration
-// app.use(cors({
-//     origin: 'https://libraryfrontend.vercel.app/',
-//     credentials: true
-// }));
-
 app.use(cors({
-    origin: '*'
+    origin: 'https://libraryfrontend.vercel.app', // Allow your frontend URL
+    credentials: true, // Enable cookies if required
+    methods: ['GET', 'POST', 'PUT', 'DELETE'] // Define allowed methods
 }));
 
 app.use(cookieParser());
 
 // Routes
-app.use('/auth', AdminRuter);
+app.use('/auth', AdminRouter); // Fixed route name
 app.use('/student', studentRouter);
 app.use('/book', bookRouter);
 
 // Dashboard Route
 app.get('/dashboard', async (req, res) => {
     try {
-        const student = await Student.countDocuments();
-        const book = await Book.countDocuments();
-        const admin = await Admin.countDocuments();
-        return res.json({ ok: true, student, book, admin });
+        const studentCount = await Student.countDocuments();
+        const bookCount = await Book.countDocuments();
+        const adminCount = await Admin.countDocuments();
+        return res.json({ ok: true, student: studentCount, book: bookCount, admin: adminCount });
     } catch (error) {
         return res.status(500).json({ error: 'Server Error' });
     }
