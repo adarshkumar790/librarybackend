@@ -1,7 +1,9 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import './db.js';
+// import { AdminRouter } from './routes/auth.js';
 import { AdminRouter } from './routes/auth.js';
 import { studentRouter } from './routes/student.js';
 import { bookRouter } from './routes/book.js';
@@ -14,19 +16,33 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(express.json());  // Parse incoming JSON requests
+app.use(express.json());
+app.use(cookieParser());
 
-// CORS configuration - allow any origin (for dev purposes)
 app.use(cors({
-    origin: '*',  // In production, change '*' to your frontend URL
+    origin: '*',  
 }));
+
+
+// app.use(cors({
+//     origin: function (origin, callback) {
+    
+//         if (!origin) return callback(null, true);
+//         if (allowedOrigins.indexOf(origin) === -1) {
+//             const msg = 'The CORS policy for this site does not allow access from the specified origin.';
+//             return callback(new Error(msg), false);
+//         }
+//         return callback(null, true);
+//     },
+//     credentials: true // Allow credentials (cookies, etc.)
+// }));
 
 // Routes
 app.use('/auth', AdminRouter);
 app.use('/student', studentRouter);
 app.use('/book', bookRouter);
 
-// Dashboard Route - Collecting data about the total counts of students, books, and admins
+// Dashboard Route
 app.get('/dashboard', async (req, res) => {
     try {
         const studentCount = await Student.countDocuments();
