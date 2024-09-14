@@ -2,8 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import './db.js'; // Ensure db.js is correctly connecting to your database
-import { AdminRouter } from './routes/auth.js'; // Correct typo from 'AdminRuter'
+import './db.js';
+import { AdminRouter } from './routes/auth.js';
 import { studentRouter } from './routes/student.js';
 import { bookRouter } from './routes/book.js';
 import { Book } from './models/Book.js';
@@ -16,18 +16,29 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-
-// CORS Configuration
-app.use(cors({
-    origin: 'https://libraryfrontend.vercel.app', // Allow your frontend URL
-    credentials: true, // Enable cookies if required
-    methods: ['GET', 'POST', 'PUT', 'DELETE'] // Define allowed methods
-}));
-
 app.use(cookieParser());
 
+// CORS Configuration with conditional origin handling
+const allowedOrigins = [
+    'http://localhost:5173',    // Allow for development
+    'https://libraryfrontend.vercel.app' // Allow for production
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    credentials: true // Allow credentials (cookies, etc.)
+}));
+
 // Routes
-app.use('/auth', AdminRouter); // Fixed route name
+app.use('/auth', AdminRouter);
 app.use('/student', studentRouter);
 app.use('/book', bookRouter);
 
