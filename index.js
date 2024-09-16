@@ -1,9 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import './db.js';
-import { AdminRuter } from './routes/auth.js';
+import './db.js'; // Database connection
+import { AdminRouter } from './routes/auth.js';
 import { studentRouter } from './routes/student.js';
 import { bookRouter } from './routes/book.js';
 import { Book } from './models/Book.js';
@@ -16,40 +15,39 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cookieParser());
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://libraryfrontend.vercel.app'],  // Allow both localhost and production URLs
+    origin: ['http://localhost:5173'],  // Allow both localhost and production URLs
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization'],  // Authorization header for tokens
 }));
 
-
-// app.use(cors({
-//     origin: function (origin, callback) {
-//         // Allow requests with no origin (like mobile apps, curl, etc.)
-//         if (!origin) return callback(null, true);
-//         if (allowedOrigins.indexOf(origin) === -1) {
-//             const msg = 'The CORS policy for this site does not allow access from the specified origin.';
-//             return callback(new Error(msg), false);
-//         }
-//         return callback(null, true);
-//     },
-//     credentials: true // Allow credentials (cookies, etc.)
-// }));
-
 // Routes
-app.use('/auth', AdminRuter);
+app.use('/auth', AdminRouter);
 app.use('/student', studentRouter);
 app.use('/book', bookRouter);
 
-// Dashboard Route
+// Dashboard Route with Token-Based Authentication via Headers
 app.get('/dashboard', async (req, res) => {
     try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) {
+            return res.status(403).json({ message: "No token provided" });
+        }
+
+        // Token verification for both admin and student roles can be done here if needed
+        // jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+        //     if (err) return res.status(403).json({ message: "Invalid token" });
+        //     req.user = user;
+        // });
+
         const studentCount = await Student.countDocuments();
         const bookCount = await Book.countDocuments();
         const adminCount = await Admin.countDocuments();
+
         return res.json({ ok: true, student: studentCount, book: bookCount, admin: adminCount });
     } catch (error) {
         return res.status(500).json({ error: 'Server Error' });
